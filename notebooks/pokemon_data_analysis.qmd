@@ -1,0 +1,359 @@
+---
+title: "Pokémon Regression Modelling"
+format: 
+  html:
+    toc: true
+    number-sections: true
+---
+
+# Introduction
+
+This study aims to explore how speed points vary depending on the Pokémon's primary type (type\_1), secondary type (type\_2), and weight. The report is divided into two sections: (1) Speed points variation in association with Pokémon's primary type, (2) Speed points variation in association with Pokémon's both types after controlling for the weight. Each of the sections consists of the following items.
+
+\begin{enumerate}
+    \item Exploratory Data Analysis (EDA): visualises the correlation pattern between response and predictor variables for further statistical test.
+    \item ANOVA and ANCOVA Tests: these statistical tests are performed to validate the patterns found in EDA stage
+\end{enumerate}
+
+# Speed Points Variation in Association with Pokémon Primary Type
+
+## Exploratory Data Analysis
+
+Before doing any visualisation or hypothesis testing, I'd take a look at the data structure: what covariates are present, the number of Pokémon types, and missing values if any. This information will enable me to understand the Pokémon type distribution, whether they are balanced or not.
+
+```{r}
+library(pokemon)
+pokemon$type_1 <- as.factor(pokemon$type_1)
+pokemon$type_2 <- as.factor(pokemon$type_2)
+head(pokemon)
+```
+
+```{r}
+rows_amt <- nrow(pokemon)
+print(paste("The number of Pokémon in the dataset:", rows_amt))
+```
+
+```{r}
+# Check the structure
+str(pokemon$type_1)
+
+# 1. Count NAs
+na_type_1 <- sum(is.na(pokemon$type_1))
+print(paste("NAs count for type_1: ", na_type_1))
+
+# 2. See the breakdown of all levels (NA would appear separately if present)
+summary(pokemon$type_1)
+
+# 3. Proportion of NAs
+na_prop_type_1 <- mean(is.na(pokemon$type_1))
+print(paste("Proportion of NAs in type_1: ", na_prop_type_1))
+```
+
+```{r}
+# Check the structure
+str(pokemon$type_2)
+
+# 1. Count NAs
+na_type_2 <- sum(is.na(pokemon$type_2))
+print(paste("NAs count for type_2: ", na_type_2))
+
+# 2. See the breakdown of all levels (NA would appear separately if present)
+summary(pokemon$type_2)
+
+# 3. Proportion of NAs
+na_prop_type_2 <- mean(is.na(pokemon$type_2))
+print(paste("Proportion of NAs in type_2: ", na_prop_type_2))
+```
+
+A total of 18 Pokémon types are observed in the dataset, with no missing values in the type_1 covariate The distribution of Pokémon types is notably imbalanced. Among the 949 recorded Pokémon, only four are classified as Flying-type, whereas Water-type Pokémon account for as many as 126 observations.
+
+On the other hand, there are also a total of 18 Pokémon types present in the type_2 with 439 missing values. However, I assume that NA here represents \textit{no secondary type} for that Pokémon instead of missing data. Furthermore, the distribution of the factors in the type_2 is also imbalanced with only five are Bug-type, but as many as 121 Pokémon are Flying-type.
+
+In the next step, I plot speed points of 18 primary types (type\_1) to see if there is any speed variation among existing types. The plot below displays speed variation according to the type, with dragon, electric, fairy, flying, grass, psychic, and steel noticeably stand out from the other types. 
+
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+```
+
+
+```{r}
+ggplot(pokemon, aes(x = type_1, y = speed)) +
+  geom_boxplot() +
+  geom_point() +
+  labs(title = "Pokémon primary type vs speed", x = "Primary Type", y = "Speed") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+The presence of outliers in several types, such as psychic, bug, electric, and rock, caught my attention. Further research into the Pokémon community shows that there is another category of Pokémon called \textit{Legendary Pokémon}. However, this is not an official category, such as those in type\_1 and type\_2, but they are spread across every type. Legendary Pokémon are powerful and have higher power stats compared to the normal ones (https://bulbapedia.bulbagarden.net/wiki/Legendary_Pok%C3%A9mon). Hence, I suspect that Pokémon types with a high number of Legendary Pokémon, affect the type's speed average.
+
+To affirm the theory, the Pokémons are classified into two new categories (the new classification is named legendary\_group): (1) primary types with a high number of Legendary Pokémon (called \textit{legendary}): psychic, dragon, flying, and fire (https://thelostlambda.github.io/pokestats/); (2) primary types with a low number of Legendary Pokémon (called \textit{non\_legendary}): consists of other types not yet mentioned. As seen in the plot below, \textit{legendary level has higher speed points compared to the non\_legendary}. Later on, this will be tested with ANOVA to see if either of the two levels' speed is different from the overall average speed.
+
+```{r}
+# Create a binary grouping variable
+pokemon$legendary_group <- ifelse(pokemon$type_1 %in% c("psychic", "dragon", "flying", "fire"), "legendary", "non_legendary")
+
+pokemon$legendary_group <- as.factor(pokemon$legendary_group)
+
+ggplot(pokemon, aes(x = legendary_group, y = speed)) +
+  geom_boxplot() +
+  geom_point() +
+  labs(title = "Pokémon Legendary group vs speed", x = "Legendary group", y = "Speed") +
+  theme_bw()
+```
+
+Furthermore, Pokémon stats distribution is closely related to its combat style, which is divided into three classes based on the Pokémon community: offensive, defensive, and balanced (https://www.reddit.com/r/TruePokemon/comments/fimlpi/offensive_vs_defensive_typings/). To investigate how speed points vary in association to the Pokémon's combat style, Pokémons are classified into three levels: (1) offensive, covering fighting, ground, fire, ice, electric, and rock types; (2) defensive,  covering steel, fairy, water, dragon, ghost, and poison; (3) balanced, covering normal, flying, psychic, dark, grass, and bug. 
+
+Pokémon classification vs speed plot shows that both balanced and defensive Pokémon have the same average speed, while offensive ones have a higher average speed. This signals that offensive-typed Pokémon has average speed that is different from the overall average speed. Further ANOVA test will be used to verify this hypothesis.
+
+```{r}
+# Create offensive/defensive/balanced classification
+pokemon$type_classification <- case_when(
+  pokemon$type_1 %in% c("fighting", "ground", "fire", "ice", "electric", "rock") ~ "offensive",
+  pokemon$type_1 %in% c("steel", "fairy", "water", "dragon", "ghost", "poison") ~ "defensive",
+  pokemon$type_1 %in% c("normal", "flying", "psychic", "dark", "grass", "bug") ~ "balanced",
+  TRUE ~ NA_character_
+)
+
+pokemon$type_classification <- as.factor(pokemon$type_classification)
+
+# Check the classification
+table(pokemon$type_classification)
+```
+
+
+```{r}
+# Visualisation of speed vs combat style
+ggplot(pokemon, aes(x = type_classification, y = speed)) +
+  geom_boxplot() +
+  geom_point() +
+  labs(title = "Pokémon classification vs speed", x = "Pokémon classification", y = "Speed") +
+  theme_bw()
+```
+
+## ANOVA Test
+
+### Testing if any type in type_1 is different from the overall average speed
+
+Firstly, I employ ANOVA test to evaluate the significance of regression model of speed against type\_1 using centered parametrisation approach (lm(formula = speed ~ type\_1)): 
+
+$H_0: \beta_1 = ... = \beta_{18} = 0$
+    
+$H_1: \text{at least one of } \beta_1, ..., \beta_{18} \text{ is not 0}$
+
+```{r}
+#| message: false
+#| warning: false
+library(standardize)
+```
+
+
+```{r}
+# Set sum-to-zero contrasts on type_1
+contrasts(pokemon$type_1) <- named_contr_sum(levels(pokemon$type_1))
+
+# Fit the model
+fit_speed_stz <- lm(speed ~ type_1, data = pokemon)
+
+# Get summary
+summary(fit_speed_stz)
+```
+
+```{r}
+## Calculating type_1=water estimated coefficient and p-value
+V <- vcov(fit_speed_stz)
+coef_all <- coef(fit_speed_stz)
+coef_factors <- coef_all[-1]  # Remove intercept
+
+k <- length(coef_factors)
+n <- nrow(pokemon)
+p <- length(coef_all)
+df <- n - p
+
+beta_missing <- -sum(coef_factors) # type_1=water estimated coefficient
+
+V_factors <- V[-1, -1]
+c_contrast <- rep(1, k)
+var_beta_missing <- as.numeric(t(c_contrast) %*% V_factors %*% c_contrast) # calculate variance of type_1=water 
+
+sd_beta_missing <- sqrt(var_beta_missing) # calculate std deviation of type_1=water 
+
+t_stat <- beta_missing / sd_beta_missing # calculate t-stat
+
+p_value <- 2 * (1 - pt(abs(t_stat), df = df)) # calculate p-value
+
+print(beta_missing)
+print(p_value)
+```
+
+
+```{r}
+fit_null <- lm(speed ~ 1, data = pokemon)
+anova(fit_null, fit_speed_stz)
+```
+
+Based on the one-way ANOVA test, $H_0$ is rejected (p-value = 9.783e-11), and \textbf{type\_1 is a significant predictor of speed}. Furthermore, as indicated in Pokémon primary type vs speed plot, the graph indicates that at least dragon, electric, fairy, flying, grass, psychic, and steel have different average speeds compared to the overall average. A closer look at the regression summary (using sum to zero approach) in the regerssion summary above, demonstrating that \textit{bug, dragon, electric, fairy, flying, grass, psychic, and steel are statistically different from the overall speed (with p-value $<$ 0.05)}.
+
+### Testing if any of the types with high and low numbers of legendary Pokémon are different from the overall average speed
+
+Further ANOVA test to evaluate the significance of regression model of speed against the legendary\_group with the formula lm(formula = speed ~ legendary\_group) using centered parametrisation approach:
+    
+$H_0: \beta_1 = \beta_2 = 0$
+    
+$H_1: \text{at least one of } \beta_1, \beta_2 \text{ is not equal 0}$
+
+```{r}
+contrasts(pokemon$legendary_group) <- named_contr_sum(levels(pokemon$legendary_group)) # Set sum-to-zero contrasts on type_1
+fit_legendary <- lm(speed ~ legendary_group, data = pokemon) # Fit model comparing the two groups
+summary(fit_legendary)
+```
+
+```{r}
+fit_null <- lm(speed ~ 1, data = pokemon)
+anova(fit_null, fit_legendary) # ANOVA test to check if there is legendary group that is different from the overall average speed
+```
+
+The ANOVA test produces p-value of 5.748e-07 ($<$ 0.05). Hence, $H_0$ is rejected, and it is concluded that at least one of the legendary\_group is statistically significant in predicting the speed points. Furthermore, the regression summary above shows that the estimated coefficients of both legendary and non\_legendary levels are significant with a p-value of 5.75e-07 ($<$ 0.05), meaning that \textit{the average speed of each group is different from the overall average speed}.
+
+### Testing if any of the offensive, defensive, and balanced Pokémon types are different from the overall average speed
+
+ANOVA test is employed to test the significance of the regression model for speed points against the Pokémon's combat style lm(formula = speed ~ type\_classification) using centered parametrisation approach: 
+
+$H_0: \beta_1 = ... = \beta_{3} = 0$
+    
+$H_1: \text{at least one of } \beta_1, ..., \beta_{3} \text{ is not 0}$
+
+```{r}
+# Set sum-to-zero contrasts on type_1
+contrasts(pokemon$type_classification) <- named_contr_sum(levels(pokemon$type_classification))
+
+# Fit model comparing the two groups
+fit_classification <- lm(speed ~ type_classification, data = pokemon)
+summary(fit_classification)
+```
+
+```{r}
+## Calculating offensive estimated coefficient and p-value
+V <- vcov(fit_classification)
+coef_all <- coef(fit_classification)
+coef_factors <- coef_all[-1]  # Remove intercept
+
+k <- length(coef_factors)
+n <- nrow(pokemon)
+p <- length(coef_all)
+df <- n - p
+
+beta_missing <- -sum(coef_factors) # type_1=water estimated coefficient
+
+V_factors <- V[-1, -1]
+c_contrast <- rep(1, k)
+var_beta_missing <- as.numeric(t(c_contrast) %*% V_factors %*% c_contrast) # calculate variance of offensive
+
+sd_beta_missing <- sqrt(var_beta_missing) # calculate std deviation of offensive
+
+t_stat <- beta_missing / sd_beta_missing # calculate t-stat
+
+p_value <- 2 * (1 - pt(abs(t_stat), df = df)) # calculate p-value
+
+print(beta_missing)
+print(p_value)
+```
+
+```{r}
+fit_null <- lm(speed ~ 1, data = pokemon)
+anova(fit_null, fit_classification)
+```
+
+Based on one-way ANOVA test, the model fails to reject $H_0$ (p-value = 0.07124 $>$ 0.05), and it is concluded that the model is not statistically significant. However, the regression summary shows that the defensive type showed a statistically significant difference from the grand mean (refer to the regression summary table above), with a mean speed approximately 2.9691 points lower (p = 0.0312 $<$ 0.05). Hence, despite this individual significance, the model explains very little variance in speed ($R^2$ = 0.0056), and the overall factor was marginally insignificant.
+
+# Speed points variation in association with Pokémon's both types after controlling for the weight
+
+## Exploratory Data Analysis
+
+```{r}
+#| message: false
+ggplot(pokemon, aes(x = weight, y = speed, group = type_1, color = type_1)) +
+  scale_color_viridis_d() +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Speed vs Weight by Pokémon Type", x = "Weight", y = "Speed") +
+  theme_bw()
+```
+
+Speed vs Weight by Pokémon Type plot shows that the relationship between speed points and weight differs considerably depending on the primary type, signalling the importance of the interaction term between weight and type\_1 in the regression model later.
+
+## ANCOVA Test
+
+As it is assumed that the NA values in the type\_2 predictor represents \textit{no secondary type} for that Pokémon instead of missing data, I first recode NA to \textit{None} and treat it as another level for Pokémon without a secondary type.
+
+For the ANCOVA test on speed points variation with both Pokémon type after controlling for their weight, the regression model being tested is lm(speed ~ weight + type\_1 + type\_2\_clean), where type\_2\_clean is the pre-processed type\_2 column. I use centered parametrisation for type\_1 and referenced parametrisation for type\_2:
+    
+$H_0: \beta_2 = ... = \beta_{37} = 0$
+    
+$H_1: \text{at least one of } \beta_2, ..., \beta_{37} \text{ is not 0}$
+
+```{r}
+pokemon$type_2_clean <- pokemon$type_2
+pokemon$type_2_clean <- as.character(pokemon$type_2_clean)  # Converting to character
+pokemon$type_2_clean[is.na(pokemon$type_2_clean)] <- "None"  # Replacing NA with "None"
+pokemon$type_2_clean <- factor(pokemon$type_2_clean)  # Converting to factor
+
+fit_null <- lm(speed ~ weight, data = pokemon) # Fitting model with only weight as the predictor
+summary(fit_null)
+
+fit_ancova <- lm(speed ~ weight + type_1 + type_2_clean, data = pokemon) # Fitting model with weight, type_1, and type_2_clean as the predictors
+summary(fit_ancova)
+```
+
+```{r}
+anova(fit_null, fit_ancova) # Test whether type_1 and type_2 have effect on speed after controlling for the weight
+```
+
+    
+The ANCOVA test gives a p-value of < 2.2e-16. Hence, $H_0$ is rejected, and it is concluded that speed points vary with both Pokemon type after controlling for their weight (or both Pokemon types are statistically significant in predicting speed points after controlling for their weight).
+
+Another ANCOVA test is employed to check whether there is any difference in the relationship between speed and weight depending on the primary type. The regression model being tested here is lm(formula = speed ~ weight * type\_1 + type\_2\_clean), using centered parametrisation for type\_1 and referenced parametrisation for type\_2:
+    
+$H_0: \beta_2 = ... = \beta_{55} = 0$
+    
+$H_1: \text{at least one of } \beta_2, ..., \beta_{55} \text{ is not 0}$
+
+```{r}
+fit_interaction <- lm(speed ~ weight * type_1 + type_2_clean, data = pokemon) # Fitting a model with weight-type_1 interaction term
+summary(fit_interaction)
+```
+
+```{r}
+anova(fit_ancova, fit_interaction) # Test the significance of weight-type_1 interaction term
+```
+
+The ANCOVA test gives a p-value of 0.07904 (> 0.05). Hence, $H_0$ is accepted, and it is concluded that the relationship between speed and weight does not differ depending on the primary type. However, this ANCOVA test result is contradictory to the interpretation of Speed vs Weight by Pokémon Type plot. A closer look at the speed-weight data of each type reveals that high leverage points are present in the dataset (Speed vs Weight by Pokémon Type (Bug, Fighting, Grass, Normal) plot), creating regression lines that can't be interpreted as such without any statistical test.
+
+```{r}
+#| message: false
+selected_types <- subset(pokemon, type_1 %in% c("bug", "fighting", "grass", "normal"))
+
+ggplot(selected_types, aes(x = weight, y = speed)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Speed vs Weight by Pokémon Type (Bug, Fighting, Grass, Normal)", x = "Weight", y = "Speed") +
+  theme_bw() +
+  facet_wrap(~type_1, ncol = 2)
+```
+
+# Conclusion
+
+ANOVA test on the regression model of speed points against type\_1 shows that the primary type of Pokémon is statistically significant in predicting the speed. Furthermore, the regression reveals that bug,
+dragon, electric, fairy, flying, grass, psychic, and steel types are statistically different from the overall speed.
+
+By constructing linear combinations of the $\mu_i$'s, we're able to see the effect of the number of legendary Pokémon on the speed points and the effect of the Pokémon's combat style on the speed points. The ANOVA test on the first case shows that the model is statistically significant. Additionally, both legendary and non\_legendary levels' speed average differ from the overall average based on the regression model.
+
+On the other hand, the ANOVA test on the latter case shows that the model is not statistically significant. However, the regression model demonstrates that defensive-type Pokémon's average speed differs significantly from the overall average speed, while balanced and offensive types do not.
+
+The ANCOVA test on speed variation with both Pokémon types after controlling for their weight concludes that the model without the interaction term between the primary type and weight is statistically significant.
+
+# Disclaimer
+
+This report has been partially submitted as a part of STAT8130 Generalised Linear Modelling course in Semester 1 2026 in obtaining a degree in Master's of Applied Data Analytics.
