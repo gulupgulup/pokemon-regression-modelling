@@ -6,6 +6,9 @@ I'm exploring Pokémon dataset made available by pokemon library in R to underst
 ## Overview
 This project demonstrates a simple Quarto workflow.
 
+## Live Report
+[Click here to view](https://gulupgulup.github.io/pokemon-regression-modelling/)
+
 ## Tech
 - R
 - Quarto
