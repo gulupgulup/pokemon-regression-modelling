@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Pokémon Regression Modelling</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-985aa47af68dae11cd4d235c71fb941e.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-dfb324f25d9b1687192fa8be62ac8f9c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#speed-points-variation-in-association-with-pokémon-primary-type" id="toc-speed-points-variation-in-association-with-pokémon-primary-type" class="nav-link" data-scroll-target="#speed-points-variation-in-association-with-pokémon-primary-type"><span class="header-section-number">2</span> Speed Points Variation in Association with Pokémon Primary Type</a>
+  <ul class="collapse">
+  <li><a href="#exploratory-data-analysis" id="toc-exploratory-data-analysis" class="nav-link" data-scroll-target="#exploratory-data-analysis"><span class="header-section-number">2.1</span> Exploratory Data Analysis</a></li>
+  <li><a href="#anova-test" id="toc-anova-test" class="nav-link" data-scroll-target="#anova-test"><span class="header-section-number">2.2</span> ANOVA Test</a>
+  <ul class="collapse">
+  <li><a href="#testing-if-any-type-in-type_1-is-different-from-the-overall-average-speed" id="toc-testing-if-any-type-in-type_1-is-different-from-the-overall-average-speed" class="nav-link" data-scroll-target="#testing-if-any-type-in-type_1-is-different-from-the-overall-average-speed"><span class="header-section-number">2.2.1</span> Testing if any type in type_1 is different from the overall average speed</a></li>
+  <li><a href="#testing-if-any-of-the-types-with-high-and-low-numbers-of-legendary-pokémon-are-different-from-the-overall-average-speed" id="toc-testing-if-any-of-the-types-with-high-and-low-numbers-of-legendary-pokémon-are-different-from-the-overall-average-speed" class="nav-link" data-scroll-target="#testing-if-any-of-the-types-with-high-and-low-numbers-of-legendary-pokémon-are-different-from-the-overall-average-speed"><span class="header-section-number">2.2.2</span> Testing if any of the types with high and low numbers of legendary Pokémon are different from the overall average speed</a></li>
+  <li><a href="#testing-if-any-of-the-offensive-defensive-and-balanced-pokémon-types-are-different-from-the-overall-average-speed" id="toc-testing-if-any-of-the-offensive-defensive-and-balanced-pokémon-types-are-different-from-the-overall-average-speed" class="nav-link" data-scroll-target="#testing-if-any-of-the-offensive-defensive-and-balanced-pokémon-types-are-different-from-the-overall-average-speed"><span class="header-section-number">2.2.3</span> Testing if any of the offensive, defensive, and balanced Pokémon types are different from the overall average speed</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#speed-points-variation-in-association-with-pokémons-both-types-after-controlling-for-the-weight" id="toc-speed-points-variation-in-association-with-pokémons-both-types-after-controlling-for-the-weight" class="nav-link" data-scroll-target="#speed-points-variation-in-association-with-pokémons-both-types-after-controlling-for-the-weight"><span class="header-section-number">3</span> Speed points variation in association with Pokémon’s both types after controlling for the weight</a>
+  <ul class="collapse">
+  <li><a href="#exploratory-data-analysis-1" id="toc-exploratory-data-analysis-1" class="nav-link" data-scroll-target="#exploratory-data-analysis-1"><span class="header-section-number">3.1</span> Exploratory Data Analysis</a></li>
+  <li><a href="#ancova-test" id="toc-ancova-test" class="nav-link" data-scroll-target="#ancova-test"><span class="header-section-number">3.2</span> ANCOVA Test</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">4</span> Conclusion</a></li>
+  <li><a href="#disclaimer" id="toc-disclaimer" class="nav-link" data-scroll-target="#disclaimer"><span class="header-section-number">5</span> Disclaimer</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Pokémon Regression Modelling</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p>This study aims to explore how speed points vary depending on the Pokémon’s primary type (type_1), secondary type (type_2), and weight. The report is divided into two sections: (1) Speed points variation in association with Pokémon’s primary type, (2) Speed points variation in association with Pokémon’s both types after controlling for the weight. Each of the sections consists of the following items.</p>
+</section>
+<section id="speed-points-variation-in-association-with-pokémon-primary-type" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Speed Points Variation in Association with Pokémon Primary Type</h1>
+<section id="exploratory-data-analysis" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="exploratory-data-analysis"><span class="header-section-number">2.1</span> Exploratory Data Analysis</h2>
+<p>Before doing any visualisation or hypothesis testing, I’d take a look at the data structure: what covariates are present, the number of Pokémon types, and missing values if any. This information will enable me to understand the Pokémon type distribution, whether they are balanced or not.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pokemon)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>pokemon<span class="sc">$</span>type_1 <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(pokemon<span class="sc">$</span>type_1)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>pokemon<span class="sc">$</span>type_2 <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(pokemon<span class="sc">$</span>type_2)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(pokemon)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  id    pokemon species_id height weight base_experience type_1 type_2 hp
+1  1  bulbasaur          1    0.7    6.9              64  grass poison 45
+2  2    ivysaur          2    1.0   13.0             142  grass poison 60
+3  3   venusaur          3    2.0  100.0             236  grass poison 80
+4  4 charmander          4    0.6    8.5              62   fire   &lt;NA&gt; 39
+5  5 charmeleon          5    1.1   19.0             142   fire   &lt;NA&gt; 58
+6  6  charizard          6    1.7   90.5             240   fire flying 78
+  attack defense special_attack special_defense speed color_1 color_2 color_f
+1     49      49             65              65    45 #78C850 #A040A0 #81A763
+2     62      63             80              80    60 #78C850 #A040A0 #81A763
+3     82      83            100             100    80 #78C850 #A040A0 #81A763
+4     52      43             60              50    65 #F08030    &lt;NA&gt;    &lt;NA&gt;
+5     64      58             80              65    80 #F08030    &lt;NA&gt;    &lt;NA&gt;
+6     84      78            109              85   100 #F08030 #A890F0 #DE835E
+  egg_group_1 egg_group_2
+1     monster       plant
+2     monster       plant
+3     monster       plant
+4     monster      dragon
+5     monster      dragon
+6     monster      dragon
+                                                 url_icon generation_id
+1 //archives.bulbagarden.net/media/upload/7/7b/001MS6.png             1
+2 //archives.bulbagarden.net/media/upload/a/a0/002MS6.png             1
+3 //archives.bulbagarden.net/media/upload/0/07/003MS6.png             1
+4 //archives.bulbagarden.net/media/upload/7/7d/004MS6.png             1
+5 //archives.bulbagarden.net/media/upload/b/be/005MS6.png             1
+6 //archives.bulbagarden.net/media/upload/4/41/006MS6.png             1
+                                                                            url_image
+1 https://raw.githubusercontent.com/HybridShivam/Pokemon/master/assets/images/001.png
+2 https://raw.githubusercontent.com/HybridShivam/Pokemon/master/assets/images/002.png
+3 https://raw.githubusercontent.com/HybridShivam/Pokemon/master/assets/images/003.png
+4 https://raw.githubusercontent.com/HybridShivam/Pokemon/master/assets/images/004.png
+5 https://raw.githubusercontent.com/HybridShivam/Pokemon/master/assets/images/005.png
+6 https://raw.githubusercontent.com/HybridShivam/Pokemon/master/assets/images/006.png</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>rows_amt <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pokemon)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"The number of Pokémon in the dataset:"</span>, rows_amt))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "The number of Pokémon in the dataset: 949"</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the structure</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(pokemon<span class="sc">$</span>type_1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Factor w/ 18 levels "bug","dark","dragon",..: 10 10 10 7 7 7 18 18 18 1 ...</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Count NAs</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>na_type_1 <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(pokemon<span class="sc">$</span>type_1))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"NAs count for type_1: "</span>, na_type_1))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "NAs count for type_1:  0"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. See the breakdown of all levels (NA would appear separately if present)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(pokemon<span class="sc">$</span>type_1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     bug     dark   dragon electric    fairy fighting     fire   flying 
+      79       37       39       61       19       31       59        4 
+   ghost    grass   ground      ice   normal   poison  psychic     rock 
+      40       84       36       29      111       35       64       65 
+   steel    water 
+      30      126 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Proportion of NAs</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>na_prop_type_1 <span class="ot">&lt;-</span> <span class="fu">mean</span>(<span class="fu">is.na</span>(pokemon<span class="sc">$</span>type_1))</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Proportion of NAs in type_1: "</span>, na_prop_type_1))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Proportion of NAs in type_1:  0"</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the structure</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(pokemon<span class="sc">$</span>type_2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Factor w/ 18 levels "bug","dark","dragon",..: 14 14 14 NA NA 8 NA NA NA NA ...</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Count NAs</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>na_type_2 <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(pokemon<span class="sc">$</span>type_2))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"NAs count for type_2: "</span>, na_type_2))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "NAs count for type_2:  439"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. See the breakdown of all levels (NA would appear separately if present)</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(pokemon<span class="sc">$</span>type_2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     bug     dark   dragon electric    fairy fighting     fire   flying 
+       5       25       22       12       39       33       15      121 
+   ghost    grass   ground      ice   normal   poison  psychic     rock 
+      18       26       40       15        7       35       36       14 
+   steel    water     NA's 
+      29       18      439 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Proportion of NAs</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>na_prop_type_2 <span class="ot">&lt;-</span> <span class="fu">mean</span>(<span class="fu">is.na</span>(pokemon<span class="sc">$</span>type_2))</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Proportion of NAs in type_2: "</span>, na_prop_type_2))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Proportion of NAs in type_2:  0.46259220231823"</code></pre>
+</div>
+</div>
+<p>A total of 18 Pokémon types are observed in the dataset, with no missing values in the type_1 covariate The distribution of Pokémon types is notably imbalanced. Among the 949 recorded Pokémon, only four are classified as Flying-type, whereas Water-type Pokémon account for as many as 126 observations.</p>
+<p>On the other hand, there are also a total of 18 Pokémon types present in the type_2 with 439 missing values. However, I assume that NA here represents for that Pokémon instead of missing data. Furthermore, the distribution of the factors in the type_2 is also imbalanced with only five are Bug-type, but as many as 121 Pokémon are Flying-type.</p>
+<p>In the next step, I plot speed points of 18 primary types (type_1) to see if there is any speed variation among existing types. The plot below displays speed variation according to the type, with dragon, electric, fairy, flying, grass, psychic, and steel noticeably stand out from the other types.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pokemon, <span class="fu">aes</span>(<span class="at">x =</span> type_1, <span class="at">y =</span> speed)) <span class="sc">+</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Pokémon primary type vs speed"</span>, <span class="at">x =</span> <span class="st">"Primary Type"</span>, <span class="at">y =</span> <span class="st">"Speed"</span>) <span class="sc">+</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="pokemon_data_analysis_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The presence of outliers in several types, such as psychic, bug, electric, and rock, caught my attention. Further research into the Pokémon community shows that there is another category of Pokémon called . However, this is not an official category, such as those in type_1 and type_2, but they are spread across every type. Legendary Pokémon are powerful and have higher power stats compared to the normal ones (https://bulbapedia.bulbagarden.net/wiki/Legendary_Pok%C3%A9mon). Hence, I suspect that Pokémon types with a high number of Legendary Pokémon, affect the type’s speed average.</p>
+<p>To affirm the theory, the Pokémons are classified into two new categories (the new classification is named legendary_group): (1) primary types with a high number of Legendary Pokémon (called ): psychic, dragon, flying, and fire (https://thelostlambda.github.io/pokestats/); (2) primary types with a low number of Legendary Pokémon (called ): consists of other types not yet mentioned. As seen in the plot below, . Later on, this will be tested with ANOVA to see if either of the two levels’ speed is different from the overall average speed.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a binary grouping variable</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>pokemon<span class="sc">$</span>legendary_group <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(pokemon<span class="sc">$</span>type_1 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"psychic"</span>, <span class="st">"dragon"</span>, <span class="st">"flying"</span>, <span class="st">"fire"</span>), <span class="st">"legendary"</span>, <span class="st">"non_legendary"</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>pokemon<span class="sc">$</span>legendary_group <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(pokemon<span class="sc">$</span>legendary_group)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pokemon, <span class="fu">aes</span>(<span class="at">x =</span> legendary_group, <span class="at">y =</span> speed)) <span class="sc">+</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Pokémon Legendary group vs speed"</span>, <span class="at">x =</span> <span class="st">"Legendary group"</span>, <span class="at">y =</span> <span class="st">"Speed"</span>) <span class="sc">+</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="pokemon_data_analysis_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Furthermore, Pokémon stats distribution is closely related to its combat style, which is divided into three classes based on the Pokémon community: offensive, defensive, and balanced (https://www.reddit.com/r/TruePokemon/comments/fimlpi/offensive_vs_defensive_typings/). To investigate how speed points vary in association to the Pokémon’s combat style, Pokémons are classified into three levels: (1) offensive, covering fighting, ground, fire, ice, electric, and rock types; (2) defensive, covering steel, fairy, water, dragon, ghost, and poison; (3) balanced, covering normal, flying, psychic, dark, grass, and bug.</p>
+<p>Pokémon classification vs speed plot shows that both balanced and defensive Pokémon have the same average speed, while offensive ones have a higher average speed. This signals that offensive-typed Pokémon has average speed that is different from the overall average speed. Further ANOVA test will be used to verify this hypothesis.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create offensive/defensive/balanced classification</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>pokemon<span class="sc">$</span>type_classification <span class="ot">&lt;-</span> <span class="fu">case_when</span>(</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  pokemon<span class="sc">$</span>type_1 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"fighting"</span>, <span class="st">"ground"</span>, <span class="st">"fire"</span>, <span class="st">"ice"</span>, <span class="st">"electric"</span>, <span class="st">"rock"</span>) <span class="sc">~</span> <span class="st">"offensive"</span>,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  pokemon<span class="sc">$</span>type_1 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"steel"</span>, <span class="st">"fairy"</span>, <span class="st">"water"</span>, <span class="st">"dragon"</span>, <span class="st">"ghost"</span>, <span class="st">"poison"</span>) <span class="sc">~</span> <span class="st">"defensive"</span>,</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  pokemon<span class="sc">$</span>type_1 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"normal"</span>, <span class="st">"flying"</span>, <span class="st">"psychic"</span>, <span class="st">"dark"</span>, <span class="st">"grass"</span>, <span class="st">"bug"</span>) <span class="sc">~</span> <span class="st">"balanced"</span>,</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_character_</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>pokemon<span class="sc">$</span>type_classification <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(pokemon<span class="sc">$</span>type_classification)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the classification</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(pokemon<span class="sc">$</span>type_classification)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ balanced defensive offensive 
+      379       289       281 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualisation of speed vs combat style</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pokemon, <span class="fu">aes</span>(<span class="at">x =</span> type_classification, <span class="at">y =</span> speed)) <span class="sc">+</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Pokémon classification vs speed"</span>, <span class="at">x =</span> <span class="st">"Pokémon classification"</span>, <span class="at">y =</span> <span class="st">"Speed"</span>) <span class="sc">+</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="pokemon_data_analysis_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="anova-test" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="anova-test"><span class="header-section-number">2.2</span> ANOVA Test</h2>
+<section id="testing-if-any-type-in-type_1-is-different-from-the-overall-average-speed" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="testing-if-any-type-in-type_1-is-different-from-the-overall-average-speed"><span class="header-section-number">2.2.1</span> Testing if any type in type_1 is different from the overall average speed</h3>
+<p>Firstly, I employ ANOVA test to evaluate the significance of regression model of speed against type_1 using centered parametrisation approach (lm(formula = speed ~ type_1)):</p>
+<p><span class="math inline">\(H_0: \beta_1 = ... = \beta_{18} = 0\)</span></p>
+<p><span class="math inline">\(H_1: \text{at least one of } \beta_1, ..., \beta_{18} \text{ is not 0}\)</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(standardize)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set sum-to-zero contrasts on type_1</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">contrasts</span>(pokemon<span class="sc">$</span>type_1) <span class="ot">&lt;-</span> <span class="fu">named_contr_sum</span>(<span class="fu">levels</span>(pokemon<span class="sc">$</span>type_1))</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the model</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>fit_speed_stz <span class="ot">&lt;-</span> <span class="fu">lm</span>(speed <span class="sc">~</span> type_1, <span class="at">data =</span> pokemon)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Get summary</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_speed_stz)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = speed ~ type_1, data = pokemon)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-65.288 -20.722  -0.938  19.278  99.062 
+
+Coefficients:
+                Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)     70.20605    1.25563  55.913  &lt; 2e-16 ***
+type_1bug       -6.88959    3.24363  -2.124  0.03393 *  
+type_1dark       6.41557    4.54691   1.411  0.15859    
+type_1dragon    12.66574    4.43791   2.854  0.00441 ** 
+type_1electric  17.00706    3.62774   4.688 3.17e-06 ***
+type_1fairy    -16.62710    6.22632  -2.670  0.00771 ** 
+type_1fighting  -2.62541    4.93667  -0.532  0.59498    
+type_1fire       3.26853    3.68147   0.888  0.37486    
+type_1flying    32.29395   13.35033   2.419  0.01576 *  
+type_1ghost     -4.55605    4.38658  -1.039  0.29924    
+type_1grass     -9.92034    3.16049  -3.139  0.00175 ** 
+type_1ground    -5.62272    4.60488  -1.221  0.22238    
+type_1ice       -5.65433    5.09340  -1.110  0.26723    
+type_1normal     0.08224    2.81825   0.029  0.97673    
+type_1poison    -6.03462    4.66537  -1.293  0.19616    
+type_1psychic   10.73145    3.55211   3.021  0.00259 ** 
+type_1rock      -5.94451    3.52812  -1.685  0.09234 .  
+type_1steel    -14.10605    5.01304  -2.814  0.00500 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 28.19 on 931 degrees of freedom
+Multiple R-squared:  0.08497,   Adjusted R-squared:  0.06826 
+F-statistic: 5.085 on 17 and 931 DF,  p-value: 9.783e-11</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Calculating type_1=water estimated coefficient and p-value</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>V <span class="ot">&lt;-</span> <span class="fu">vcov</span>(fit_speed_stz)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>coef_all <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_speed_stz)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>coef_factors <span class="ot">&lt;-</span> coef_all[<span class="sc">-</span><span class="dv">1</span>]  <span class="co"># Remove intercept</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="fu">length</span>(coef_factors)</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pokemon)</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">length</span>(coef_all)</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> n <span class="sc">-</span> p</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>beta_missing <span class="ot">&lt;-</span> <span class="sc">-</span><span class="fu">sum</span>(coef_factors) <span class="co"># type_1=water estimated coefficient</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>V_factors <span class="ot">&lt;-</span> V[<span class="sc">-</span><span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>c_contrast <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">1</span>, k)</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>var_beta_missing <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">t</span>(c_contrast) <span class="sc">%*%</span> V_factors <span class="sc">%*%</span> c_contrast) <span class="co"># calculate variance of type_1=water </span></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>sd_beta_missing <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(var_beta_missing) <span class="co"># calculate std deviation of type_1=water </span></span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>t_stat <span class="ot">&lt;-</span> beta_missing <span class="sc">/</span> sd_beta_missing <span class="co"># calculate t-stat</span></span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>p_value <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="fu">pt</span>(<span class="fu">abs</span>(t_stat), <span class="at">df =</span> df)) <span class="co"># calculate p-value</span></span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(beta_missing)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -4.483828</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(p_value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.09470183</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>fit_null <span class="ot">&lt;-</span> <span class="fu">lm</span>(speed <span class="sc">~</span> <span class="dv">1</span>, <span class="at">data =</span> pokemon)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(fit_null, fit_speed_stz)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Analysis of Variance Table
+
+Model 1: speed ~ 1
+Model 2: speed ~ type_1
+  Res.Df    RSS Df Sum of Sq      F    Pr(&gt;F)    
+1    948 808815                                  
+2    931 740094 17     68721 5.0851 9.783e-11 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<p>Based on the one-way ANOVA test, <span class="math inline">\(H_0\)</span> is rejected (p-value = 9.783e-11), and . Furthermore, as indicated in Pokémon primary type vs speed plot, the graph indicates that at least dragon, electric, fairy, flying, grass, psychic, and steel have different average speeds compared to the overall average. A closer look at the regression summary (using sum to zero approach) in the regerssion summary above, demonstrating that .</p>
+</section>
+<section id="testing-if-any-of-the-types-with-high-and-low-numbers-of-legendary-pokémon-are-different-from-the-overall-average-speed" class="level3" data-number="2.2.2">
+<h3 data-number="2.2.2" class="anchored" data-anchor-id="testing-if-any-of-the-types-with-high-and-low-numbers-of-legendary-pokémon-are-different-from-the-overall-average-speed"><span class="header-section-number">2.2.2</span> Testing if any of the types with high and low numbers of legendary Pokémon are different from the overall average speed</h3>
+<p>Further ANOVA test to evaluate the significance of regression model of speed against the legendary_group with the formula lm(formula = speed ~ legendary_group) using centered parametrisation approach:</p>
+<p><span class="math inline">\(H_0: \beta_1 = \beta_2 = 0\)</span></p>
+<p><span class="math inline">\(H_1: \text{at least one of } \beta_1, \beta_2 \text{ is not equal 0}\)</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">contrasts</span>(pokemon<span class="sc">$</span>legendary_group) <span class="ot">&lt;-</span> <span class="fu">named_contr_sum</span>(<span class="fu">levels</span>(pokemon<span class="sc">$</span>legendary_group)) <span class="co"># Set sum-to-zero contrasts on type_1</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>fit_legendary <span class="ot">&lt;-</span> <span class="fu">lm</span>(speed <span class="sc">~</span> legendary_group, <span class="at">data =</span> pokemon) <span class="co"># Fit model comparing the two groups</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_legendary)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = speed ~ legendary_group, data = pokemon)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-61.853 -21.853  -1.853  20.741 100.741 
+
+Coefficients:
+                         Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)                73.056      1.232  59.289  &lt; 2e-16 ***
+legendary_grouplegendary    6.203      1.232   5.034 5.75e-07 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 28.84 on 947 degrees of freedom
+Multiple R-squared:  0.02606,   Adjusted R-squared:  0.02503 
+F-statistic: 25.34 on 1 and 947 DF,  p-value: 5.748e-07</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>fit_null <span class="ot">&lt;-</span> <span class="fu">lm</span>(speed <span class="sc">~</span> <span class="dv">1</span>, <span class="at">data =</span> pokemon)</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(fit_null, fit_legendary) <span class="co"># ANOVA test to check if there is legendary group that is different from the overall average speed</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Analysis of Variance Table
+
+Model 1: speed ~ 1
+Model 2: speed ~ legendary_group
+  Res.Df    RSS Df Sum of Sq      F    Pr(&gt;F)    
+1    948 808815                                  
+2    947 787736  1     21080 25.341 5.748e-07 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<p>The ANOVA test produces p-value of 5.748e-07 (<span class="math inline">\(&lt;\)</span> 0.05). Hence, <span class="math inline">\(H_0\)</span> is rejected, and it is concluded that at least one of the legendary_group is statistically significant in predicting the speed points. Furthermore, the regression summary above shows that the estimated coefficients of both legendary and non_legendary levels are significant with a p-value of 5.75e-07 (<span class="math inline">\(&lt;\)</span> 0.05), meaning that .</p>
+</section>
+<section id="testing-if-any-of-the-offensive-defensive-and-balanced-pokémon-types-are-different-from-the-overall-average-speed" class="level3" data-number="2.2.3">
+<h3 data-number="2.2.3" class="anchored" data-anchor-id="testing-if-any-of-the-offensive-defensive-and-balanced-pokémon-types-are-different-from-the-overall-average-speed"><span class="header-section-number">2.2.3</span> Testing if any of the offensive, defensive, and balanced Pokémon types are different from the overall average speed</h3>
+<p>ANOVA test is employed to test the significance of the regression model for speed points against the Pokémon’s combat style lm(formula = speed ~ type_classification) using centered parametrisation approach:</p>
+<p><span class="math inline">\(H_0: \beta_1 = ... = \beta_{3} = 0\)</span></p>
+<p><span class="math inline">\(H_1: \text{at least one of } \beta_1, ..., \beta_{3} \text{ is not 0}\)</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set sum-to-zero contrasts on type_1</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">contrasts</span>(pokemon<span class="sc">$</span>type_classification) <span class="ot">&lt;-</span> <span class="fu">named_contr_sum</span>(<span class="fu">levels</span>(pokemon<span class="sc">$</span>type_classification))</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit model comparing the two groups</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>fit_classification <span class="ot">&lt;-</span> <span class="fu">lm</span>(speed <span class="sc">~</span> type_classification, <span class="at">data =</span> pokemon)</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_classification)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = speed ~ type_classification, data = pokemon)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-64.375 -23.375  -1.616  20.625 110.625 
+
+Coefficients:
+                             Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)                   69.0106     0.9552  72.250   &lt;2e-16 ***
+type_classificationbalanced    0.3641     1.2885   0.283   0.7776    
+type_classificationdefensive  -2.9691     1.3759  -2.158   0.0312 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 29.16 on 946 degrees of freedom
+Multiple R-squared:  0.00557,   Adjusted R-squared:  0.003467 
+F-statistic: 2.649 on 2 and 946 DF,  p-value: 0.07124</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Calculating offensive estimated coefficient and p-value</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>V <span class="ot">&lt;-</span> <span class="fu">vcov</span>(fit_classification)</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>coef_all <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_classification)</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>coef_factors <span class="ot">&lt;-</span> coef_all[<span class="sc">-</span><span class="dv">1</span>]  <span class="co"># Remove intercept</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="fu">length</span>(coef_factors)</span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pokemon)</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">length</span>(coef_all)</span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> n <span class="sc">-</span> p</span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>beta_missing <span class="ot">&lt;-</span> <span class="sc">-</span><span class="fu">sum</span>(coef_factors) <span class="co"># type_1=water estimated coefficient</span></span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a>V_factors <span class="ot">&lt;-</span> V[<span class="sc">-</span><span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a>c_contrast <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">1</span>, k)</span>
+<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a>var_beta_missing <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">t</span>(c_contrast) <span class="sc">%*%</span> V_factors <span class="sc">%*%</span> c_contrast) <span class="co"># calculate variance of offensive</span></span>
+<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-17"><a href="#cb42-17" aria-hidden="true" tabindex="-1"></a>sd_beta_missing <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(var_beta_missing) <span class="co"># calculate std deviation of offensive</span></span>
+<span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a>t_stat <span class="ot">&lt;-</span> beta_missing <span class="sc">/</span> sd_beta_missing <span class="co"># calculate t-stat</span></span>
+<span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-21"><a href="#cb42-21" aria-hidden="true" tabindex="-1"></a>p_value <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="fu">pt</span>(<span class="fu">abs</span>(t_stat), <span class="at">df =</span> df)) <span class="co"># calculate p-value</span></span>
+<span id="cb42-22"><a href="#cb42-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-23"><a href="#cb42-23" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(beta_missing)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2.605041</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(p_value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.06047163</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>fit_null <span class="ot">&lt;-</span> <span class="fu">lm</span>(speed <span class="sc">~</span> <span class="dv">1</span>, <span class="at">data =</span> pokemon)</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(fit_null, fit_classification)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Analysis of Variance Table
+
+Model 1: speed ~ 1
+Model 2: speed ~ type_classification
+  Res.Df    RSS Df Sum of Sq      F  Pr(&gt;F)  
+1    948 808815                              
+2    946 804311  2    4504.7 2.6491 0.07124 .
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<p>Based on one-way ANOVA test, the model fails to reject <span class="math inline">\(H_0\)</span> (p-value = 0.07124 <span class="math inline">\(&gt;\)</span> 0.05), and it is concluded that the model is not statistically significant. However, the regression summary shows that the defensive type showed a statistically significant difference from the grand mean (refer to the regression summary table above), with a mean speed approximately 2.9691 points lower (p = 0.0312 <span class="math inline">\(&lt;\)</span> 0.05). Hence, despite this individual significance, the model explains very little variance in speed (<span class="math inline">\(R^2\)</span> = 0.0056), and the overall factor was marginally insignificant.</p>
+</section>
+</section>
+</section>
+<section id="speed-points-variation-in-association-with-pokémons-both-types-after-controlling-for-the-weight" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Speed points variation in association with Pokémon’s both types after controlling for the weight</h1>
+<section id="exploratory-data-analysis-1" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="exploratory-data-analysis-1"><span class="header-section-number">3.1</span> Exploratory Data Analysis</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pokemon, <span class="fu">aes</span>(<span class="at">x =</span> weight, <span class="at">y =</span> speed, <span class="at">group =</span> type_1, <span class="at">color =</span> type_1)) <span class="sc">+</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_d</span>() <span class="sc">+</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Speed vs Weight by Pokémon Type"</span>, <span class="at">x =</span> <span class="st">"Weight"</span>, <span class="at">y =</span> <span class="st">"Speed"</span>) <span class="sc">+</span></span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="pokemon_data_analysis_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Speed vs Weight by Pokémon Type plot shows that the relationship between speed points and weight differs considerably depending on the primary type, signalling the importance of the interaction term between weight and type_1 in the regression model later.</p>
+</section>
+<section id="ancova-test" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="ancova-test"><span class="header-section-number">3.2</span> ANCOVA Test</h2>
+<p>As it is assumed that the NA values in the type_2 predictor represents for that Pokémon instead of missing data, I first recode NA to and treat it as another level for Pokémon without a secondary type.</p>
+<p>For the ANCOVA test on speed points variation with both Pokémon type after controlling for their weight, the regression model being tested is lm(speed ~ weight + type_1 + type_2_clean), where type_2_clean is the pre-processed type_2 column. I use centered parametrisation for type_1 and referenced parametrisation for type_2:</p>
+<p><span class="math inline">\(H_0: \beta_2 = ... = \beta_{37} = 0\)</span></p>
+<p><span class="math inline">\(H_1: \text{at least one of } \beta_2, ..., \beta_{37} \text{ is not 0}\)</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>pokemon<span class="sc">$</span>type_2_clean <span class="ot">&lt;-</span> pokemon<span class="sc">$</span>type_2</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>pokemon<span class="sc">$</span>type_2_clean <span class="ot">&lt;-</span> <span class="fu">as.character</span>(pokemon<span class="sc">$</span>type_2_clean)  <span class="co"># Converting to character</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>pokemon<span class="sc">$</span>type_2_clean[<span class="fu">is.na</span>(pokemon<span class="sc">$</span>type_2_clean)] <span class="ot">&lt;-</span> <span class="st">"None"</span>  <span class="co"># Replacing NA with "None"</span></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>pokemon<span class="sc">$</span>type_2_clean <span class="ot">&lt;-</span> <span class="fu">factor</span>(pokemon<span class="sc">$</span>type_2_clean)  <span class="co"># Converting to factor</span></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>fit_null <span class="ot">&lt;-</span> <span class="fu">lm</span>(speed <span class="sc">~</span> weight, <span class="at">data =</span> pokemon) <span class="co"># Fitting model with only weight as the predictor</span></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_null)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = speed ~ weight, data = pokemon)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-64.338 -23.538  -3.502  21.466 111.021 
+
+Coefficients:
+             Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) 68.485731   1.083139  63.229   &lt;2e-16 ***
+weight       0.008117   0.007909   1.026    0.305    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 29.21 on 947 degrees of freedom
+Multiple R-squared:  0.001111,  Adjusted R-squared:  5.634e-05 
+F-statistic: 1.053 on 1 and 947 DF,  p-value: 0.305</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>fit_ancova <span class="ot">&lt;-</span> <span class="fu">lm</span>(speed <span class="sc">~</span> weight <span class="sc">+</span> type_1 <span class="sc">+</span> type_2_clean, <span class="at">data =</span> pokemon) <span class="co"># Fitting model with weight, type_1, and type_2_clean as the predictors</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_ancova)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = speed ~ weight + type_1 + type_2_clean, data = pokemon)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-60.109 -19.703  -2.529  17.279 103.253 
+
+Coefficients:
+                       Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)           55.629995  12.170735   4.571 5.53e-06 ***
+weight                 0.014057   0.008177   1.719 0.085940 .  
+type_1bug             -7.292930   3.278963  -2.224 0.026382 *  
+type_1dark             3.036114   4.476398   0.678 0.497786    
+type_1dragon          10.968005   4.382545   2.503 0.012501 *  
+type_1electric        18.202351   3.514700   5.179 2.75e-07 ***
+type_1fairy          -14.686879   5.996420  -2.449 0.014502 *  
+type_1fighting        -0.762774   4.755946  -0.160 0.872615    
+type_1fire             2.075252   3.558344   0.583 0.559898    
+type_1flying          34.409277  13.018531   2.643 0.008356 ** 
+type_1ghost           -3.728718   4.490821  -0.830 0.406588    
+type_1grass          -11.335210   3.131451  -3.620 0.000311 ***
+type_1ground          -5.202764   4.493541  -1.158 0.247236    
+type_1ice             -2.911835   4.922119  -0.592 0.554277    
+type_1normal          -2.122462   2.756726  -0.770 0.441546    
+type_1poison          -7.076699   4.585233  -1.543 0.123089    
+type_1psychic         10.136221   3.442677   2.944 0.003319 ** 
+type_1rock            -7.650909   3.494827  -2.189 0.028834 *  
+type_1steel          -13.914314   5.205136  -2.673 0.007648 ** 
+type_2_cleandark      23.196028  13.221332   1.754 0.079691 .  
+type_2_cleandragon    13.256355  13.587382   0.976 0.329503    
+type_2_cleanelectric   2.212474  14.406771   0.154 0.877981    
+type_2_cleanfairy     16.191321  12.910102   1.254 0.210106    
+type_2_cleanfighting  30.387917  13.029971   2.332 0.019909 *  
+type_2_cleanfire      27.531347  14.047287   1.960 0.050311 .  
+type_2_cleanflying    30.984206  12.362657   2.506 0.012374 *  
+type_2_cleanghost      6.660059  13.772932   0.484 0.628813    
+type_2_cleangrass      3.783906  13.369221   0.283 0.777217    
+type_2_cleanground     0.315651  12.840056   0.025 0.980393    
+type_2_cleanice       14.692071  14.014330   1.048 0.294750    
+type_2_cleanNone      10.125856  12.209878   0.829 0.407142    
+type_2_cleannormal    20.046239  16.024419   1.251 0.211262    
+type_2_cleanpoison    19.813553  13.078136   1.515 0.130115    
+type_2_cleanpsychic   16.699176  12.978336   1.287 0.198527    
+type_2_cleanrock     -14.986723  14.179230  -1.057 0.290815    
+type_2_cleansteel     10.529991  13.161491   0.800 0.423884    
+type_2_cleanwater      3.662208  13.640022   0.268 0.788383    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 26.83 on 912 degrees of freedom
+Multiple R-squared:  0.1885,    Adjusted R-squared:  0.1564 
+F-statistic: 5.884 on 36 and 912 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(fit_null, fit_ancova) <span class="co"># Test whether type_1 and type_2 have effect on speed after controlling for the weight</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Analysis of Variance Table
+
+Model 1: speed ~ weight
+Model 2: speed ~ weight + type_1 + type_2_clean
+  Res.Df    RSS Df Sum of Sq      F    Pr(&gt;F)    
+1    947 807917                                  
+2    912 656371 35    151546 6.0162 &lt; 2.2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<p>The ANCOVA test gives a p-value of &lt; 2.2e-16. Hence, <span class="math inline">\(H_0\)</span> is rejected, and it is concluded that speed points vary with both Pokemon type after controlling for their weight (or both Pokemon types are statistically significant in predicting speed points after controlling for their weight).</p>
+<p>Another ANCOVA test is employed to check whether there is any difference in the relationship between speed and weight depending on the primary type. The regression model being tested here is lm(formula = speed ~ weight * type_1 + type_2_clean), using centered parametrisation for type_1 and referenced parametrisation for type_2:</p>
+<p><span class="math inline">\(H_0: \beta_2 = ... = \beta_{55} = 0\)</span></p>
+<p><span class="math inline">\(H_1: \text{at least one of } \beta_2, ..., \beta_{55} \text{ is not 0}\)</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>fit_interaction <span class="ot">&lt;-</span> <span class="fu">lm</span>(speed <span class="sc">~</span> weight <span class="sc">*</span> type_1 <span class="sc">+</span> type_2_clean, <span class="at">data =</span> pokemon) <span class="co"># Fitting a model with weight-type_1 interaction term</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_interaction)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = speed ~ weight * type_1 + type_2_clean, data = pokemon)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-62.778 -19.529  -1.978  16.658 103.161 
+
+Coefficients:
+                       Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)            53.06652   12.22736   4.340 1.59e-05 ***
+weight                  0.09606    0.03031   3.169 0.001583 ** 
+type_1bug              -6.19180    4.08167  -1.517 0.129625    
+type_1dark              9.31939    5.10690   1.825 0.068355 .  
+type_1dragon            8.71837    6.12690   1.423 0.155095    
+type_1electric         20.88453    4.48240   4.659 3.66e-06 ***
+type_1fairy           -16.07347    6.73832  -2.385 0.017269 *  
+type_1fighting         10.46493    6.94550   1.507 0.132235    
+type_1fire              7.50378    4.81489   1.558 0.119480    
+type_1flying          -14.54622   27.79963  -0.523 0.600928    
+type_1ghost            -0.38190    5.12564  -0.075 0.940623    
+type_1grass            -7.98541    3.95888  -2.017 0.043985 *  
+type_1ground            0.01164    5.33328   0.002 0.998260    
+type_1ice               1.44932    6.39139   0.227 0.820662    
+type_1normal           -0.34238    3.53779  -0.097 0.922924    
+type_1poison          -16.53370    7.38157  -2.240 0.025345 *  
+type_1psychic          15.02223    4.03159   3.726 0.000207 ***
+type_1rock              0.36464    4.84026   0.075 0.939965    
+type_1steel           -11.30966    6.52238  -1.734 0.083266 .  
+type_2_cleandark       22.68898   13.25687   1.711 0.087337 .  
+type_2_cleandragon     13.01196   13.79004   0.944 0.345641    
+type_2_cleanelectric    1.14413   14.42576   0.079 0.936802    
+type_2_cleanfairy      15.45560   12.89118   1.199 0.230873    
+type_2_cleanfighting   28.88244   13.03448   2.216 0.026953 *  
+type_2_cleanfire       26.28351   14.05662   1.870 0.061834 .  
+type_2_cleanflying     29.39924   12.33921   2.383 0.017399 *  
+type_2_cleanghost       5.73528   13.77826   0.416 0.677323    
+type_2_cleangrass       3.09080   13.35024   0.232 0.816966    
+type_2_cleanground     -0.80176   12.86306  -0.062 0.950313    
+type_2_cleanice        12.56806   14.09248   0.892 0.372725    
+type_2_cleanNone        9.15629   12.19483   0.751 0.452950    
+type_2_cleannormal     18.57613   15.99180   1.162 0.245706    
+type_2_cleanpoison     18.77286   13.06230   1.437 0.151017    
+type_2_cleanpsychic    15.63637   12.97964   1.205 0.228644    
+type_2_cleanrock      -16.37200   14.16378  -1.156 0.248028    
+type_2_cleansteel       9.37921   13.19393   0.711 0.477348    
+type_2_cleanwater       3.58669   13.57942   0.264 0.791743    
+weight:type_1bug       -0.01035    0.06207  -0.167 0.867634    
+weight:type_1dark      -0.12119    0.04225  -2.869 0.004221 ** 
+weight:type_1dragon    -0.03879    0.04221  -0.919 0.358350    
+weight:type_1electric  -0.04950    0.08721  -0.568 0.570469    
+weight:type_1fairy      0.14088    0.12482   1.129 0.259350    
+weight:type_1fighting  -0.21690    0.09045  -2.398 0.016691 *  
+weight:type_1fire      -0.10781    0.05081  -2.122 0.034130 *  
+weight:type_1flying     0.87007    0.44485   1.956 0.050789 .  
+weight:type_1ghost     -0.08018    0.04047  -1.981 0.047861 *  
+weight:type_1grass     -0.07563    0.05160  -1.466 0.143131    
+weight:type_1ground    -0.09305    0.03464  -2.686 0.007356 ** 
+weight:type_1ice       -0.09068    0.04898  -1.851 0.064452 .  
+weight:type_1normal    -0.03990    0.04577  -0.872 0.383586    
+weight:type_1poison     0.27964    0.15792   1.771 0.076936 .  
+weight:type_1psychic   -0.10274    0.03767  -2.727 0.006510 ** 
+weight:type_1rock      -0.13567    0.04611  -2.943 0.003338 ** 
+weight:type_1steel     -0.07761    0.03449  -2.250 0.024699 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 26.7 on 895 degrees of freedom
+Multiple R-squared:  0.2113,    Adjusted R-squared:  0.1646 
+F-statistic: 4.524 on 53 and 895 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(fit_ancova, fit_interaction) <span class="co"># Test the significance of weight-type_1 interaction term</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Analysis of Variance Table
+
+Model 1: speed ~ weight + type_1 + type_2_clean
+Model 2: speed ~ weight * type_1 + type_2_clean
+  Res.Df    RSS Df Sum of Sq      F  Pr(&gt;F)  
+1    912 656371                              
+2    895 637904 17     18467 1.5241 0.07904 .
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<p>The ANCOVA test gives a p-value of 0.07904 (&gt; 0.05). Hence, <span class="math inline">\(H_0\)</span> is accepted, and it is concluded that the relationship between speed and weight does not differ depending on the primary type. However, this ANCOVA test result is contradictory to the interpretation of Speed vs Weight by Pokémon Type plot. A closer look at the speed-weight data of each type reveals that high leverage points are present in the dataset (Speed vs Weight by Pokémon Type (Bug, Fighting, Grass, Normal) plot), creating regression lines that can’t be interpreted as such without any statistical test.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>selected_types <span class="ot">&lt;-</span> <span class="fu">subset</span>(pokemon, type_1 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"bug"</span>, <span class="st">"fighting"</span>, <span class="st">"grass"</span>, <span class="st">"normal"</span>))</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(selected_types, <span class="fu">aes</span>(<span class="at">x =</span> weight, <span class="at">y =</span> speed)) <span class="sc">+</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Speed vs Weight by Pokémon Type (Bug, Fighting, Grass, Normal)"</span>, <span class="at">x =</span> <span class="st">"Weight"</span>, <span class="at">y =</span> <span class="st">"Speed"</span>) <span class="sc">+</span></span>
+<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>type_1, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="pokemon_data_analysis_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="conclusion" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Conclusion</h1>
+<p>ANOVA test on the regression model of speed points against type_1 shows that the primary type of Pokémon is statistically significant in predicting the speed. Furthermore, the regression reveals that bug, dragon, electric, fairy, flying, grass, psychic, and steel types are statistically different from the overall speed.</p>
+<p>By constructing linear combinations of the <span class="math inline">\(\mu_i\)</span>’s, we’re able to see the effect of the number of legendary Pokémon on the speed points and the effect of the Pokémon’s combat style on the speed points. The ANOVA test on the first case shows that the model is statistically significant. Additionally, both legendary and non_legendary levels’ speed average differ from the overall average based on the regression model.</p>
+<p>On the other hand, the ANOVA test on the latter case shows that the model is not statistically significant. However, the regression model demonstrates that defensive-type Pokémon’s average speed differs significantly from the overall average speed, while balanced and offensive types do not.</p>
+<p>The ANCOVA test on speed variation with both Pokémon types after controlling for their weight concludes that the model without the interaction term between the primary type and weight is statistically significant.</p>
+</section>
+<section id="disclaimer" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Disclaimer</h1>
+<p>This report has been partially submitted as a part of STAT8130 Generalised Linear Modelling course in Semester 1 2026 in obtaining a degree in Master’s of Applied Data Analytics.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

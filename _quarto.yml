@@ -1,0 +1,9 @@
+project:
+  type: website   # or "default" for single doc
+  output-dir: docs
+
+format:
+  html:
+    toc: true
+    number-sections: true
+    theme: cosmo
